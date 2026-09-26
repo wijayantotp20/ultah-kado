@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selamat Ulang Tahun</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #FDF8F9;
+            --text-main: #2C3539;
+            --text-muted: #6b7280;
+            --gold-accent: #B78846;
+            --pink-accent: #E8A3AC;
+            --font-heading: 'Playfair Display', serif;
+            --font-body: 'Montserrat', sans-serif;
+        }
+        body {
+            margin: 0; padding: 0; background-color: var(--bg-color);
+            color: var(--text-main); font-family: var(--font-body);
+            overflow-x: hidden; scroll-behavior: smooth;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeUp 1.2s ease forwards; opacity: 0; }
+        .btn {
+            background-color: var(--gold-accent); color: white; border: none;
+            padding: 15px 30px; border-radius: 30px; font-family: var(--font-body);
+            font-size: 14px; font-weight: 500; letter-spacing: 1px; cursor: pointer; width: 100%;
+        }
+        #user-view { display: block; }
+        #envelope-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+            background: var(--bg-color); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 1000; transition: opacity 1s ease-in-out;
+        }
+        .env-wrapper { width: 300px; height: 200px; position: relative; cursor: pointer; }
+        .env-back { position: absolute; width: 100%; height: 100%; background: #c59b27; z-index: 1; border-radius: 5px 5px 0 0; }
+        .env-letter {
+            position: absolute; left: 10px; right: 10px; bottom: 10px; height: 180px;
+            background: #fff; z-index: 2; border-radius: 5px; transition: transform 0.8s ease 0.4s;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-heading); color: var(--gold-accent); font-size: 18px;
+        }
+        .env-front {
+            position: absolute; width: 100%; height: 100%; z-index: 3;
+            border-left: 150px solid #d4af37; border-right: 150px solid #d4af37;
+            border-bottom: 100px solid #b78846; border-top: 100px solid transparent; box-sizing: border-box;
+        }
+        .env-flap {
+            position: absolute; top: 0; left: 0; width: 0; height: 0; z-index: 4;
+            border-left: 150px solid transparent; border-right: 150px solid transparent; border-top: 110px solid #e1c05c;
+            transform-origin: top; transition: transform 0.6s ease;
+        }
+        .wax-seal {
+            position: absolute; left: 50%; top: 110px; transform: translate(-50%, -50%);
+            width: 45px; height: 45px; background: #9b2823; border-radius: 50%; z-index: 5; transition: opacity 0.3s;
+        }
+        .env-wrapper.open .env-flap { transform: rotateX(180deg); z-index: 1; }
+        .env-wrapper.open .env-letter { transform: translateY(-70px); z-index: 4; }
+        .env-wrapper.open .wax-seal { opacity: 0; }
+        .tap-hint { margin-top: 40px; font-size: 13px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; animation: bounce 2s infinite; }
+        #main-content { display: none; }
+        section { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px 20px; box-sizing: border-box; }
+        .message-section { background: linear-gradient(rgba(253, 248, 249, 0.5), rgba(253, 248, 249, 1)); text-align: center; }
+        .message-content { max-width: 600px; font-size: 18px; line-height: 1.8; font-weight: 300; outline: none; }
+        .message-content[contenteditable="true"]:empty:before { content: attr(placeholder); color: #9ca3af; }
+        .scroll-indicator { font-size: 11px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 60px; animation: bounce 2s infinite; }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        .gallery-section { background-color: var(--bg-color); padding-bottom: 80px; overflow: hidden; }
+        .gallery-title { font-family: var(--font-heading); font-size: 36px; color: var(--gold-accent); margin: 0 0 5px 0; text-align: center; }
+        .gallery-subtitle { font-size: 14px; color: var(--text-muted); letter-spacing: 4px; text-transform: uppercase; margin-bottom: 50px; text-align: center; }
+        .gallery-container { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; max-width: 900px; width: 100%; padding: 20px; }
+        .frame { background: #fff; padding: 6px; padding-bottom: 24px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); width: 160px; margin: -15px -10px; box-sizing: border-box; border-radius: 2px; transition: transform 0.3s; position: relative; }
+        .frame img { width: 100%; height: 150px; object-fit: cover; }
+        
+        /* Posisi Acak Galeri */
+        .frame:nth-child(1) { transform: rotate(-6deg) translateY(5px); z-index: 2; }
+        .frame:nth-child(2) { transform: rotate(4deg) translateY(-10px); z-index: 1; }
+        .frame:nth-child(3) { transform: rotate(-3deg) translateY(15px); z-index: 4; }
+        .frame:nth-child(4) { transform: rotate(7deg) translateY(-5px); z-index: 2; }
+        .frame:nth-child(5) { transform: rotate(-8deg) translateY(10px); z-index: 3; }
+        .frame:nth-child(6) { transform: rotate(5deg) translateY(0px); z-index: 1; }
+        .frame:nth-child(7) { transform: rotate(-4deg) translateY(-12px); z-index: 5; }
+        .frame:nth-child(8) { transform: rotate(6deg) translateY(10px); z-index: 2; }
+        .frame:nth-child(9) { transform: rotate(-5deg) translateY(-5px); z-index: 4; }
+        .frame:nth-child(10) { transform: rotate(8deg) translateY(15px); z-index: 1; }
+        .frame:nth-child(11) { transform: rotate(-2deg) translateY(0px); z-index: 3; }
+        .frame:nth-child(12) { transform: rotate(4deg) translateY(-10px); z-index: 2; }
+        .frame:nth-child(13) { transform: rotate(-7deg) translateY(8px); z-index: 5; }
+        .frame:nth-child(14) { transform: rotate(3deg) translateY(-5px); z-index: 1; }
+        .frame:nth-child(15) { transform: rotate(-6deg) translateY(12px); z-index: 4; }
+        .frame:nth-child(16) { transform: rotate(5deg) translateY(0px); z-index: 2; }
+        .frame:hover { transform: scale(1.1) rotate(0deg) !important; z-index: 50 !important; }
+
+        .action-section { min-height: 80vh; background-color: #fff; text-align: center; }
+        .burnout-card { background: var(--bg-color); border: 1px solid #f3e8e9; padding: 30px; border-radius: 16px; max-width: 550px; width: 100%; box-sizing: border-box; }
+        .burnout-card h3 { font-family: var(--font-heading); color: var(--gold-accent); font-size: 22px; margin-top: 0; }
+        .burnout-card p { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
+        .burnout-textarea { width: 100%; height: 120px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; box-sizing: border-box; font-family: var(--font-body); font-size: 14px; margin-bottom: 15px; outline: none; }
+    </style>
+</head>
+<body>
+
+    <div id="user-view">
+        <div id="envelope-screen">
+            <div class="env-wrapper" onclick="openEnvelope()">
+                <div class="env-back"></div>
+                <div class="env-letter" id="letter-text">Untuk Lora Tercinta</div>
+                <div class="env-front"></div>
+                <div class="env-flap"></div>
+                <div class="wax-seal"></div>
+            </div>
+            <p class="tap-hint">Ketuk amplop untuk membuka</p>
+        </div>
+
+        <div id="main-content">
+            <section class="message-section">
+                <div class="message-content fade-in" id="final-pesan" style="animation-delay: 0.2s;" contenteditable="true" placeholder="Hi Loraa, ini Cina. Selamat memasuki usia 26 yaa, semoga semua hal tentangmu menjadi lebih baik diusia yang ke 26 ini"></div>
+                <div class="scroll-keyword scroll-indicator fade-in" style="animation-delay: 1s;">Gulir ke bawah melihat kenangan <br> ↓</div>
+            </section>
+
+            <section class="gallery-section">
+                <h1 class="gallery-title">Selamat Ulang Tahun</h1>
+                <div class="gallery-subtitle" id="final-nama">Lora Yure Nabila</div>
+                <div class="gallery-container">
+                    <div class="frame"><img id="final-img-0"></div><div class="frame"><img id="final-img-1"></div>
+                    <div class="frame"><img id="final-img-2"></div><div class="frame"><img id="final-img-3"></div>
+                    <div class="frame"><img id="final-img-4"></div><div class="frame"><img id="final-img-5"></div>
+                    <div class="frame"><img id="final-img-6"></div><div class="frame"><img id="final-img-7"></div>
+                    <div class="frame"><img id="final-img-8"></div><div class="frame"><img id="final-img-9"></div>
+                    <div class="frame"><img id="final-img-10"></div><div class="frame"><img id="final-img-11"></div>
+                    <div class="frame"><img id="final-img-12"></div><div class="frame"><img id="final-img-13"></div>
+                    <div class="frame"><img id="final-img-14"></div><div class="frame"><img id="final-img-15"></div>
+                </div>
+            </section>
+
+            <section class="action-section">
+                <div class="burnout-card">
+                    <h3>Untuk diriku di usia 25 lalu</h3>
+                    <p>Tuliskan apa yang kamu rasakan, syukuri, atau pesan untuk dirimu saat melewati usia ini.</p>
+                    <textarea class="burnout-textarea" id="user-age25-input" placeholder="Tulis pesanmu di sini..."></textarea>
+                    <button class="btn" onclick="saveUserMessage()">Kirim & Simpan Pesan 💌</button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Ganti link di bawah ini dengan link 'Raw' dari foto-foto GitHub kamu
+        let imagesArray = [
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/Images/1.jpg",
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/Images/2.jpg",
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/Images/3.jpg",
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/Images/4.jpg",
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/Images/5.jpg",
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/Images/6.jpg",
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/Images/7.jpg",
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/images/8.jpg",
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/Images/9.jpg",
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/Images/10.jpg",
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/Images/11.jpg",
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/Images/12.HEIC",
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/Images/13.HEIC",
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/Images/14.HEIC",
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/Images/15.HEIC",
+            "https://raw.githubusercontent.com/wijayantotp20/ultah-kado/main/Images/16.jpg"
+        ];
+
+        window.onload = function() {
+            for (let i = 0; i < 16; i++) {
+                document.getElementById(`final-img-${i}`).src = imagesArray[i];
+            }
+        };
+
+        function openEnvelope() {
+            const wrapper = document.querySelector('.env-wrapper');
+            if (wrapper.classList.contains('open')) return;
+            wrapper.classList.add('open');
+            setTimeout(() => {
+                document.getElementById('envelope-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('envelope-screen').style.display = 'none';
+                    document.getElementById('main-content').style.display = 'block';
+                    fireConfetti();
+                }, 1000);
+            }, 2500);
+        }
+
+        function saveUserMessage() {
+            const pesanUsia25 = document.getElementById('user-age25-input').value.trim();
+            if (pesanUsia25 === "") {
+                alert("Tuliskan dulu pesannya ya sebelum dikirim! ✨");
+                return;
+            }
+            localStorage.setItem('pesan_usia_25', pesanUsia25);
+            alert("Pesan berhasil tersimpan! 💖 Terima kasih sudah menulis untuk dirimu sendiri.");
+        }
+
+        function fireConfetti() {
+            var duration = 3500;
+            var end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 7, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#B78846', '#E8A3AC', '#ffffff', '#ffd1d6'] });
+                confetti({ particleCount: 7, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#B78846', '#E8A3AC', '#ffffff', '#ffd1d6'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+    </script>
+</body>
+</html>
